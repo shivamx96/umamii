@@ -113,20 +113,20 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center px-4 py-6">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center px-4 py-6">
       <div className="max-w-md mx-auto w-full">
-        <Card className="p-8 mb-8">
+        <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold mb-2">
+            <h1 className="text-2xl font-bold mb-2 text-gray-900">
               {step === 'phone' ? 'Enter your phone number' : 'Verify your phone'}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-gray-600">
               {step === 'phone' 
                 ? 'We\'ll send you a verification code' 
                 : `We've sent a 6-digit code to ${selectedCountry.code} ${phoneNumber}`
@@ -182,16 +182,15 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <Card className="p-3 bg-destructive/10 border-destructive/20">
-                  <p className="text-sm text-destructive">{error}</p>
-                </Card>
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
               )}
 
-              <Button
+              <button
                 type="submit"
                 disabled={isLoading || !phoneNumber}
-                size="lg"
-                className="w-full"
+                className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-xl transition-colors"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center space-x-2">
@@ -201,7 +200,7 @@ export default function LoginPage() {
                 ) : (
                   'Send OTP'
                 )}
-              </Button>
+              </button>
             </form>
           )}
 
@@ -231,34 +230,32 @@ export default function LoginPage() {
                 {/* Resend Timer */}
                 <div className="text-center">
                   {resendTimer > 0 ? (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-600">
                       Resend code in {resendTimer}s
                     </p>
                   ) : canResend ? (
-                    <Button
+                    <button
                       type="button"
-                      variant="ghost"
                       onClick={handleResendOtp}
                       disabled={isLoading}
-                      className="text-primary hover:text-primary/90"
+                      className="text-orange-500 hover:text-orange-600 font-medium transition-colors"
                     >
                       Resend Code
-                    </Button>
+                    </button>
                   ) : null}
                 </div>
               </div>
 
               {error && (
-                <Card className="p-3 bg-destructive/10 border-destructive/20">
-                  <p className="text-sm text-destructive">{error}</p>
-                </Card>
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
               )}
 
-              <Button
+              <button
                 type="submit"
                 disabled={isLoading || otp.join('').length !== 6}
-                size="lg"
-                className="w-full"
+                className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-xl transition-colors"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center space-x-2">
@@ -268,19 +265,18 @@ export default function LoginPage() {
                 ) : (
                   'Verify & Continue'
                 )}
-              </Button>
+              </button>
 
-              <Button
+              <button
                 type="button"
-                variant="ghost"
                 onClick={() => setStep('phone')}
-                className="w-full"
+                className="w-full text-gray-600 hover:text-gray-800 font-medium py-3 transition-colors"
               >
                 ← Change Phone Number
-              </Button>
+              </button>
             </form>
           )}
-        </Card>
+        </div>
       </div>
     </div>
   );

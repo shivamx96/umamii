@@ -12,10 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const OlaMap = dynamic(() => import('@/components/OlaMap'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[400px] bg-card/80 backdrop-blur-lg border-border/50 rounded-lg flex items-center justify-center">
+    <div className="w-full h-[400px] bg-gray-100 rounded-lg flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-2"></div>
-        <p className="text-white/80 text-sm">Loading map...</p>
+        <p className="text-gray-600 text-sm">Loading map...</p>
       </div>
     </div>
   )
@@ -123,32 +123,32 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen px-4 pt-6 pb-6">
+    <div className="min-h-screen bg-gray-50 px-4 pt-6 pb-6">
       {/* Header */}
-      <Card className="p-6 mb-8">
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold">Discover</h1>
-            <p className="text-muted-foreground">Find great food near you</p>
+            <h1 className="text-2xl font-bold text-gray-900">Discover</h1>
+            <p className="text-gray-600">Find great food near you</p>
           </div>
-          <Button variant="ghost" size="icon">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
-          </Button>
+          </button>
         </div>
         
         {/* Search Bar */}
         <div className="relative mb-4">
-          <Input
+          <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search restaurants or cuisine"
-            className="pl-12 py-6 text-base"
+            className="w-full pl-12 py-3 text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
           />
           <svg 
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" 
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" 
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
@@ -159,28 +159,27 @@ export default function DashboardPage() {
         
         {/* City Selector */}
         <div className="flex items-center space-x-3">
-          <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 616 0z" />
           </svg>
-          <Select value={selectedCity} onValueChange={setSelectedCity}>
-            <SelectTrigger className="flex-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="bangalore">Bangalore, India</SelectItem>
-              <SelectItem value="mumbai">Mumbai, India</SelectItem>
-              <SelectItem value="delhi">Delhi, India</SelectItem>
-            </SelectContent>
-          </Select>
+          <select 
+            value={selectedCity} 
+            onChange={(e) => setSelectedCity(e.target.value)}
+            className="flex-1 px-3 py-2 border border-gray-200 rounded-xl bg-gray-50 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          >
+            <option value="bangalore">Bangalore, India</option>
+            <option value="mumbai">Mumbai, India</option>
+            <option value="delhi">Delhi, India</option>
+          </select>
         </div>
-      </Card>
+      </div>
 
       {/* Interactive Map */}
-      <Card className="p-4 mb-8">
+      <div className="bg-white rounded-xl shadow-sm p-4 mb-8">
         <div className="mb-4">
-          <h3 className="text-lg font-semibold mb-2">Restaurants Near You</h3>
-          <p className="text-muted-foreground text-sm">Tap any pin to see details</p>
+          <h3 className="text-lg font-semibold mb-2 text-gray-900">Restaurants Near You</h3>
+          <p className="text-gray-600 text-sm">Tap any pin to see details</p>
         </div>
         <OlaMap 
           restaurants={recommendations.map(rec => rec.restaurant)}
@@ -188,41 +187,41 @@ export default function DashboardPage() {
             console.log('Restaurant clicked:', restaurant);
           }}
         />
-      </Card>
+      </div>
 
       {/* Restaurant Recommendations */}
       <div className="space-y-4">
-        <h2 className="text-xl font-bold px-2">Nearby Recommendations</h2>
+        <h2 className="text-xl font-bold px-2 text-gray-900">Nearby Recommendations</h2>
         
         {recommendations.length === 0 ? (
-          <Card className="p-8 text-center">
+          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
             <div className="animate-pulse space-y-4">
-              <div className="w-12 h-12 bg-muted rounded-2xl mx-auto"></div>
-              <div className="h-4 bg-muted rounded-lg mx-auto w-3/4"></div>
-              <div className="h-3 bg-muted rounded-lg mx-auto w-1/2"></div>
+              <div className="w-12 h-12 bg-gray-300 rounded-2xl mx-auto"></div>
+              <div className="h-4 bg-gray-300 rounded-lg mx-auto w-3/4"></div>
+              <div className="h-3 bg-gray-300 rounded-lg mx-auto w-1/2"></div>
             </div>
-          </Card>
+          </div>
         ) : (
           recommendations.map((recommendation) => (
-            <Card key={recommendation.id} className="p-6">
+            <div key={recommendation.id} className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <h3 className="font-bold text-lg mb-1">
+                  <h3 className="font-bold text-lg mb-1 text-gray-900">
                     {recommendation.restaurant.name}
                   </h3>
-                  <p className="text-muted-foreground text-sm mb-2">
+                  <p className="text-gray-600 text-sm mb-2">
                     {recommendation.restaurant.address}
                   </p>
                   
                   {/* Cuisine Tags */}
                   <div className="flex flex-wrap gap-2 mb-3">
                     {recommendation.cuisine.map((cuisine) => (
-                      <Badge 
+                      <span 
                         key={cuisine}
-                        variant="secondary"
+                        className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium"
                       >
                         {cuisine}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
                   
@@ -232,7 +231,7 @@ export default function DashboardPage() {
                       {[...Array(5)].map((_, i) => (
                         <svg 
                           key={i} 
-                          className={`w-4 h-4 ${i < Math.floor(recommendation.restaurant.rating || 0) ? 'text-yellow-400' : 'text-muted-foreground'}`}
+                          className={`w-4 h-4 ${i < Math.floor(recommendation.restaurant.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}
                           fill="currentColor" 
                           viewBox="0 0 20 20"
                         >
@@ -240,7 +239,7 @@ export default function DashboardPage() {
                         </svg>
                       ))}
                     </div>
-                    <span className="text-muted-foreground text-sm">
+                    <span className="text-gray-600 text-sm">
                       {recommendation.restaurant.rating}
                     </span>
                   </div>
@@ -248,30 +247,33 @@ export default function DashboardPage() {
               </div>
               
               {/* Personal Note */}
-              <Card className="bg-muted/50 p-4 mb-4">
-                <p className="text-sm leading-relaxed">
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <p className="text-sm leading-relaxed text-gray-700">
                   {recommendation.personalNote}
                 </p>
-              </Card>
+              </div>
               
               {/* User Info */}
               <div className="flex items-center space-x-3 mb-4">
-                <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
-                  <span className="text-xs font-semibold text-secondary-foreground">
+                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                  <span className="text-xs font-semibold text-orange-700">
                     {recommendation.user.name.charAt(0)}
                   </span>
                 </div>
-                <span className="text-muted-foreground text-sm">
+                <span className="text-gray-600 text-sm">
                   Recommended by {recommendation.user.name}
                 </span>
               </div>
               
               {/* Action Buttons */}
               <div className="flex items-center space-x-3">
-                <Button
+                <button
                   onClick={() => handleUpvote(recommendation.id)}
-                  variant={recommendation.hasUserUpvoted ? "default" : "outline"}
-                  size="sm"
+                  className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    recommendation.hasUserUpvoted 
+                      ? 'bg-orange-500 text-white hover:bg-orange-600' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
                   <svg 
                     className="w-5 h-5 mr-2" 
@@ -282,20 +284,19 @@ export default function DashboardPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
                   </svg>
                   {recommendation.upvotes}
-                </Button>
+                </button>
 
-                <Button
+                <button
                   onClick={() => handleSave(recommendation.id)}
-                  variant="outline"
-                  size="sm"
+                  className="flex items-center px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
                 >
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                   </svg>
                   Save
-                </Button>
+                </button>
               </div>
-            </Card>
+            </div>
           ))
         )}
       </div>

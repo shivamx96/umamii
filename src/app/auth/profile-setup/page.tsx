@@ -130,22 +130,23 @@ export default function ProfileSetupPage() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white flex flex-col justify-center px-6 py-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center px-6 py-8">
       <div className="max-w-md mx-auto w-full">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+        <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Create your profile
+            </h1>
+            <p className="text-gray-600">
+              Let others know who you are
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Create your profile
-          </h1>
-          <p className="text-gray-600">
-            Let others know who you are
-          </p>
-        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Profile Picture */}
@@ -296,7 +297,7 @@ export default function ProfileSetupPage() {
             <button
               type="submit"
               disabled={isLoading || !formData.name || !formData.username || usernameAvailable === false}
-              className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:transform-none tap-target"
+              className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center space-x-2">
@@ -310,6 +311,7 @@ export default function ProfileSetupPage() {
 
           </div>
         </form>
+        </div>
       </div>
     </div>
   );
