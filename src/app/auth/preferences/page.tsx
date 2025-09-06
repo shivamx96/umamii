@@ -45,6 +45,7 @@ export default function PreferencesPage() {
       await new Promise(resolve => setTimeout(resolve, 2000));
       router.push('/dashboard');
     } catch (err) {
+      console.log(err);
       console.error('Failed to save preferences');
     } finally {
       setIsLoading(false);

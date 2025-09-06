@@ -97,7 +97,6 @@ export default function DashboardPage() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [selectedCity, setSelectedCity] = useState('bangalore');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRecommendation, setSelectedRecommendation] = useState<Recommendation | null>(null);
 
   useEffect(() => {
     // Simulate loading recommendations
@@ -186,10 +185,7 @@ export default function DashboardPage() {
         <OlaMap 
           restaurants={recommendations.map(rec => rec.restaurant)}
           onRestaurantClick={(restaurant) => {
-            const recommendation = recommendations.find(r => r.restaurantId === restaurant.id);
-            if (recommendation) {
-              setSelectedRecommendation(recommendation);
-            }
+            console.log('Restaurant clicked:', restaurant);
           }}
         />
       </Card>

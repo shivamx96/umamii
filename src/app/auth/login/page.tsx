@@ -63,6 +63,7 @@ export default function LoginPage() {
       setResendTimer(60);
       setCanResend(false);
     } catch (err) {
+      console.error(err);
       setError('Failed to send OTP. Please try again.');
     } finally {
       setIsLoading(false);
@@ -105,6 +106,7 @@ export default function LoginPage() {
       await new Promise(resolve => setTimeout(resolve, 2000));
       router.push('/auth/profile-setup');
     } catch (err) {
+      console.log(err);
       setError('Invalid OTP. Please try again.');
     } finally {
       setIsLoading(false);
@@ -122,6 +124,7 @@ export default function LoginPage() {
       setCanResend(false);
       setOtp(['', '', '', '', '', '']);
     } catch (err) {
+      console.log(err);
       setError('Failed to resend OTP. Please try again.');
     } finally {
       setIsLoading(false);

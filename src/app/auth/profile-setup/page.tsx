@@ -46,6 +46,7 @@ export default function ProfileSetupPage() {
       const takenUsernames = ['admin', 'user', 'test', 'foodie', 'chef'];
       setUsernameAvailable(!takenUsernames.includes(username.toLowerCase()));
     } catch (err) {
+      console.log(err);
       setUsernameAvailable(null);
     } finally {
       setIsCheckingUsername(false);
@@ -120,15 +121,13 @@ export default function ProfileSetupPage() {
       await new Promise(resolve => setTimeout(resolve, 2000));
       router.push('/auth/preferences');
     } catch (err) {
+      console.log(err);
       setErrors({ general: 'Failed to create profile. Please try again.' });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSkip = () => {
-    router.push('/dashboard');
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white flex flex-col justify-center px-6 py-8">

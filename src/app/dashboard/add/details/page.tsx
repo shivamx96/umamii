@@ -157,6 +157,7 @@ function RecommendationDetailsContent() {
       // Navigate to confirmation page
       router.push('/dashboard/add/confirmation');
     } catch (err) {
+      console.log(err);
       setErrors({ general: 'Failed to save recommendation. Please try again.' });
     } finally {
       setIsLoading(false);
