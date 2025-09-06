@@ -10,6 +10,11 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "umamii",
   description: "food that fits your palate",
+  icons: {
+    icon: '/umamii_logo_clean.png',
+    shortcut: '/umamii_logo_clean.png',
+    apple: '/umamii_logo_clean.png',
+  },
 };
 
 export default function RootLayout({
