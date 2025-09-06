@@ -38,13 +38,6 @@ export default function OlaMap({
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
-    const apiKey = "1CtKt30A4Fbs7dDUQVITLH6JBdJph8Ybtn5sQa4S";
-    
-    if (!apiKey) {
-      console.warn('Ola Maps API key not found. Please add NEXT_PUBLIC_OLA_MAPS_API_KEY to your .env.local file');
-      return;
-    }
-
     // Initialize map with OpenStreetMap tiles
     map.current = new maplibregl.Map({
       container: mapContainer.current,
