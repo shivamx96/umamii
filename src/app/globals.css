@@ -24,3 +24,54 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* MapLibre and Map custom styles */
+.maplibregl-map {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.maplibregl-canvas-container {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.maplibregl-canvas {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.maplibregl-control-container {
+  z-index: 10 !important;
+}
+
+.maplibregl-popup {
+  max-width: 300px;
+  z-index: 20 !important;
+}
+
+.maplibregl-popup-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  border: 1px solid #e5e7eb;
+}
+
+.maplibregl-popup-tip {
+  border-top-color: white;
+}
+
+.restaurant-popup {
+  font-family: inherit;
+}
+
+.restaurant-marker {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  z-index: 15 !important;
+}
+
+.restaurant-marker:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  z-index: 16 !important;
+}
