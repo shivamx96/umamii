@@ -14,39 +14,10 @@ import {
   declineFriendRequest,
   removeFriend
 } from '@/lib/backend';
+import { Friend, FriendshipData, FriendRequest } from '@/types';
 import Image from 'next/image';
 
-
 type TabType = 'friends' | 'requests' | 'suggestions';
-
-type Friend = {
-  id: string;
-  name: string;
-  username: string;
-  bio: string | null;
-  profile_picture_url: string | null;
-  friends_count: number;
-  recommendations_count: number;
-  created_at: string;
-};
-
-type FriendshipData = {
-  id: string;
-  user_id: string;
-  friend_id: string;
-  status: string;
-  created_at: string;
-  friend: Friend;
-};
-
-type FriendRequest = {
-  id: string;
-  user_id: string;
-  friend_id: string;
-  status: string;
-  created_at: string;
-  requester: Friend;
-};
 
 export default function FriendsPage() {
   const { user: authUser, loading: authLoading } = useAuth();

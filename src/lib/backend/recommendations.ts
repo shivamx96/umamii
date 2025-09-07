@@ -164,7 +164,7 @@ export const getUserUpvotes = async (userId?: string) => {
 }
 
 // Transform recommendation data from database to frontend format
-export const transformRecommendationRow = (row: any) => ({
+export const transformRecommendationRow = (row: Record<string, unknown>) => ({
   id: row.id,
   restaurantId: row.restaurant_id,
   restaurant: row.restaurant,
@@ -177,6 +177,6 @@ export const transformRecommendationRow = (row: any) => ({
   upvotes: row.upvotes,
   hasUserUpvoted: false, // Will be determined separately
   isApproved: row.is_approved,
-  createdAt: new Date(row.created_at),
-  updatedAt: new Date(row.updated_at),
+  createdAt: new Date(row.created_at as string),
+  updatedAt: new Date(row.updated_at as string),
 })

@@ -3,9 +3,9 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
 import { onAuthStateChange, getCurrentProfile } from '@/lib/backend'
-import type { Database } from '@/types/supabase'
+import type { ProfileData } from '@/types'
 
-type Profile = Database['public']['Tables']['profiles']['Row']
+type Profile = ProfileData
 
 interface AuthContextType {
   user: User | null

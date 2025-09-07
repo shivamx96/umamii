@@ -1,7 +1,22 @@
+// Database types from Supabase
+export interface ProfileData {
+  id: string;
+  email: string;
+  name: string;
+  username: string;
+  bio: string | null;
+  profile_picture_url: string | null;
+  preferences: string[];
+  friends_count: number;
+  recommendations_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Frontend display user type (cleaned up from database format)
 export interface User {
   id: string;
   email: string;
-  phoneNumber?: string;
   name: string;
   username: string;
   bio?: string;
@@ -28,6 +43,29 @@ export interface Restaurant {
   zomatoId?: string;
 }
 
+// User recommendation from database
+export interface UserRecommendation {
+  id: string;
+  restaurant_id: string;
+  user_id: string;
+  type: string[];
+  cuisine: string[];
+  personal_note: string;
+  photos: string[];
+  upvotes: number;
+  is_approved: boolean;
+  created_at: string;
+  updated_at: string;
+  restaurant: {
+    id: string;
+    name: string;
+    address: string;
+    cuisine: string[];
+    rating?: number;
+  };
+}
+
+// Frontend recommendation interface
 export interface Recommendation {
   id: string;
   restaurantId: string;
@@ -46,6 +84,16 @@ export interface Recommendation {
 }
 
 export interface FriendRequest {
+  id: string;
+  user_id: string;
+  friend_id: string;
+  status: string;
+  created_at: string;
+  requester: Friend;
+}
+
+// Legacy interface for backward compatibility
+export interface FriendRequestLegacy {
   id: string;
   fromUserId: string;
   fromUser: User;
@@ -123,6 +171,27 @@ export type FoodPreference =
   | 'dessert'
   | 'casual_dining'
   | 'south_indian';
+
+// Friend relationship types
+export interface Friend {
+  id: string;
+  name: string;
+  username: string;
+  bio: string | null;
+  profile_picture_url: string | null;
+  friends_count: number;
+  recommendations_count: number;
+  created_at: string;
+}
+
+export interface FriendshipData {
+  id: string;
+  user_id: string;
+  friend_id: string;
+  status: string;
+  created_at: string;
+  friend: Friend;
+}
 
 export interface UserProfile extends User {
   friends: User[];

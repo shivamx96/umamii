@@ -1,13 +1,8 @@
 import { supabase } from '../supabase'
 import type { User } from '@supabase/supabase-js'
+import type { ProfileData } from '@/types'
 
-export interface AuthUser {
-  id: string
-  email: string
-  phone?: string
-}
-
-export interface ProfileData {
+export interface ProfileCreateData {
   name: string
   username: string
   bio?: string
@@ -67,7 +62,7 @@ export const verifyEmailOtp = async (email: string, token: string) => {
 }
 
 // Create or update user profile
-export const createProfile = async (userData: ProfileData) => {
+export const createProfile = async (userData: ProfileCreateData) => {
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) {
@@ -79,7 +74,6 @@ export const createProfile = async (userData: ProfileData) => {
     .upsert({
       id: user.id,
       email: user.email || '',
-      phone_number: user.phone || null,
       name: userData.name,
       username: userData.username,
       bio: userData.bio || null,

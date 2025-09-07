@@ -4,45 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { getCurrentProfile, signOut, getUserRecommendations } from '@/lib/backend';
+import { ProfileData, UserRecommendation } from '@/types';
 import Image from 'next/image';
 
-
 type ViewMode = 'map' | 'list';
-
-type ProfileData = {
-  id: string;
-  email: string;
-  name: string;
-  username: string;
-  bio?: string;
-  profile_picture_url?: string;
-  preferences: string[];
-  friends_count: number;
-  recommendations_count: number;
-  created_at: string;
-  updated_at: string;
-};
-
-type UserRecommendation = {
-  id: string;
-  restaurant_id: string;
-  user_id: string;
-  type: string[];
-  cuisine: string[];
-  personal_note: string;
-  photos: string[];
-  upvotes: number;
-  is_approved: boolean;
-  created_at: string;
-  updated_at: string;
-  restaurant: {
-    id: string;
-    name: string;
-    address: string;
-    cuisine: string[];
-    rating?: number;
-  };
-};
 
 export default function ProfilePage() {
   const { user: authUser, profile, loading: authLoading } = useAuth();

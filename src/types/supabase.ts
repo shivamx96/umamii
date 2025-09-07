@@ -12,7 +12,7 @@ export interface Database {
       profiles: {
         Row: {
           id: string
-          phone_number: string
+          email: string
           name: string
           username: string
           bio: string | null
@@ -25,7 +25,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          phone_number: string
+          email: string
           name: string
           username: string
           bio?: string | null
@@ -38,7 +38,7 @@ export interface Database {
         }
         Update: {
           id?: string
-          phone_number?: string
+          email?: string
           name?: string
           username?: string
           bio?: string | null

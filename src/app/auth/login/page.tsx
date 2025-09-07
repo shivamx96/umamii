@@ -88,7 +88,7 @@ export default function LoginPage() {
       
       if (result.user) {
         // Check if user has completed profile setup
-        const { getCurrentProfile } = await import('@/lib/supabase');
+        const { getCurrentProfile } = await import('@/lib/backend');
         const profile = await getCurrentProfile();
         
         if (profile && profile.name && profile.username) {

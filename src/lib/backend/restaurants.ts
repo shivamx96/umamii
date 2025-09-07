@@ -82,7 +82,7 @@ export const searchRestaurants = async (query: string, count: number) => {
 }
 
 // Transform restaurant data from database to frontend format
-export const transformRestaurantRow = (row: any) => ({
+export const transformRestaurantRow = (row: Record<string, unknown>) => ({
   id: row.id,
   name: row.name,
   address: row.address,
