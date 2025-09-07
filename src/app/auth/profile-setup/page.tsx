@@ -1,17 +1,22 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { createProfile, checkUsernameAvailability, uploadProfilePicture, updateProfilePicture, getCurrentProfile } from '@/lib/auth';
 import Image from 'next/image';
 
 export default function ProfileSetupPage() {
+  const { user, loading } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     username: '',
     bio: '',
     profilePicture: null as File | null,
   });
-  const [profilePictureUrl, setProfilePictureUrl] = useState<string>('');
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string>('');  
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
@@ -19,6 +24,55 @@ export default function ProfileSetupPage() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  // Load existing profile data if available
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/auth/login');
+      return;
+    }
+    
+    if (!loading && user) {
+      loadExistingProfile();
+    }
+  }, [user, loading, router]);
+  
+  const loadExistingProfile = async () => {
+    try {
+      const profile = await getCurrentProfile();
+      if (profile) {
+        setIsEditMode(true);
+        setFormData({
+          name: profile.name || '',
+          username: profile.username || '', 
+          bio: profile.bio || '',
+          profilePicture: null,
+        });
+        if (profile.profile_picture_url) {
+          setProfilePictureUrl(profile.profile_picture_url);
+        }
+        setUsernameAvailable(true); // Existing username is valid
+      }
+    } catch (error) {
+      console.error('Failed to load existing profile:', error);
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
+  // Show loading if auth is loading or profile is loading
+  if (loading || isLoadingProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+      </div>
+    );
+  }
+
+  // Show nothing if not authenticated (will redirect)
+  if (!user) {
+    return null;
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -31,22 +85,28 @@ export default function ProfileSetupPage() {
 
     // Check username availability
     if (name === 'username' && value.length >= 3) {
-      checkUsernameAvailability(value);
+      checkUsernameAsync(value);
     } else if (name === 'username') {
       setUsernameAvailable(null);
     }
   };
 
-  const checkUsernameAvailability = async (username: string) => {
+  const checkUsernameAsync = async (username: string) => {
     setIsCheckingUsername(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      // Simulate some usernames being taken
-      const takenUsernames = ['admin', 'user', 'test', 'foodie', 'chef'];
-      setUsernameAvailable(!takenUsernames.includes(username.toLowerCase()));
+      // Get current profile to check if this is the user's existing username
+      const currentProfile = await getCurrentProfile();
+      const isCurrentUsername = currentProfile?.username === username;
+      
+      if (isCurrentUsername) {
+        // User's existing username is always valid
+        setUsernameAvailable(true);
+      } else {
+        const isAvailable = await checkUsernameAvailability(username);
+        setUsernameAvailable(isAvailable);
+      }
     } catch (err) {
-      console.log(err);
+      console.error('Username check error:', err);
       setUsernameAvailable(null);
     } finally {
       setIsCheckingUsername(false);
@@ -82,21 +142,38 @@ export default function ProfileSetupPage() {
     setErrors(prev => ({ ...prev, profilePicture: '' }));
   };
 
+  const handleRemoveProfilePicture = () => {
+    setFormData(prev => ({ ...prev, profilePicture: null }));
+    setProfilePictureUrl('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    setErrors(prev => ({ ...prev, profilePicture: '' }));
+  };
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = 'Name must be at least 2 characters';
+    } else if (formData.name.trim().length > 50) {
+      newErrors.name = 'Name must be 50 characters or less';
     }
 
     if (!formData.username.trim()) {
       newErrors.username = 'Username is required';
     } else if (formData.username.length < 3) {
       newErrors.username = 'Username must be at least 3 characters';
+    } else if (formData.username.length > 20) {
+      newErrors.username = 'Username must be 20 characters or less';
     } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
       newErrors.username = 'Username can only contain letters, numbers, and underscores';
     } else if (usernameAvailable === false) {
       newErrors.username = 'Username is already taken';
+    } else if (usernameAvailable === null && formData.username.length >= 3) {
+      newErrors.username = 'Please wait while we check username availability';
     }
 
     if (formData.bio.length > 150) {
@@ -117,12 +194,37 @@ export default function ProfileSetupPage() {
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      router.push('/auth/preferences');
-    } catch (err) {
-      console.log(err);
-      setErrors({ general: 'Failed to create profile. Please try again.' });
+      // Create profile with backend
+      await createProfile({
+        name: formData.name,
+        username: formData.username,
+        bio: formData.bio || undefined,
+      });
+      
+      // Handle profile picture upload if file is selected
+      if (formData.profilePicture) {
+        try {
+          const profilePictureUrl = await uploadProfilePicture(formData.profilePicture);
+          await updateProfilePicture(profilePictureUrl);
+        } catch (uploadError) {
+          console.error('Profile picture upload error:', uploadError);
+          // Continue without profile picture if upload fails
+          setErrors({ 
+            profilePicture: 'Profile created successfully, but profile picture upload failed. You can add it later.' 
+          });
+        }
+      }
+      
+      if (isEditMode) {
+        router.push('/dashboard/profile');
+      } else {
+        router.push('/auth/preferences');
+      }
+    } catch (err: unknown) {
+      console.error('Profile creation error:', err);
+      setErrors({ 
+        general: err instanceof Error ? err.message : 'Failed to create profile. Please try again.' 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -141,10 +243,10 @@ export default function ProfileSetupPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Create your profile
+              {isEditMode ? 'Edit your profile' : 'Create your profile'}
             </h1>
             <p className="text-gray-600">
-              Let others know who you are
+              {isEditMode ? 'Update your profile information' : 'Let others know who you are'}
             </p>
           </div>
 
@@ -173,9 +275,20 @@ export default function ProfileSetupPage() {
                 className="absolute -bottom-1 -right-1 w-8 h-8 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors duration-200"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={profilePictureUrl ? "M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" : "M12 6v6m0 0v6m0-6h6m-6 0H6"} />
                 </svg>
               </button>
+              {profilePictureUrl && (
+                <button
+                  type="button"
+                  onClick={handleRemoveProfilePicture}
+                  className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors duration-200"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
             <input
               ref={fileInputRef}
@@ -184,9 +297,20 @@ export default function ProfileSetupPage() {
               onChange={handleFileSelect}
               className="hidden"
             />
-            <p className="text-sm text-gray-500 text-center">
-              Optional - Add a profile picture
-            </p>
+            <div className="text-center">
+              <p className="text-sm text-gray-500">
+                Optional - Add a profile picture
+              </p>
+              {profilePictureUrl && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-sm text-orange-500 hover:text-orange-600 font-medium mt-1"
+                >
+                  Change picture
+                </button>
+              )}
+            </div>
             {errors.profilePicture && (
               <p className="text-sm text-red-600">{errors.profilePicture}</p>
             )}
@@ -305,7 +429,7 @@ export default function ProfileSetupPage() {
                   <span>Creating Profile...</span>
                 </div>
               ) : (
-                'Continue'
+                isEditMode ? 'Save Changes' : 'Continue'
               )}
             </button>
 

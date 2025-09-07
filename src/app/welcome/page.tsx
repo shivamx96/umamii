@@ -2,15 +2,30 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function WelcomePage() {
   const [isAnimated, setIsAnimated] = useState(false);
   const router = useRouter();
+  const { user, profile, loading } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsAnimated(true), 500);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (loading) return; // Wait for auth state to load
+    
+    if (user) {
+      // User is authenticated, redirect appropriately
+      if (profile && profile.name && profile.username) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/auth/profile-setup');
+      }
+    }
+  }, [user, profile, loading, router]);
 
   const handleGetStarted = () => {
     router.push('/auth/login');

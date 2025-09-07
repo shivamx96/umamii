@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { updatePreferences } from '@/lib/auth';
 import { FoodPreference } from '@/types';
 
 const foodPreferences: { value: FoodPreference; label: string; icon: string }[] = [
@@ -25,9 +27,31 @@ const foodPreferences: { value: FoodPreference; label: string; icon: string }[] 
 ];
 
 export default function PreferencesPage() {
+  const { user, loading } = useAuth();
   const [selectedPreferences, setSelectedPreferences] = useState<FoodPreference[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/auth/login');
+    }
+  }, [user, loading, router]);
+
+  // Show loading if auth is loading
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+      </div>
+    );
+  }
+
+  // Show nothing if not authenticated (will redirect)
+  if (!user) {
+    return null;
+  }
 
   const togglePreference = (preference: FoodPreference) => {
     setSelectedPreferences(prev => 
@@ -41,12 +65,14 @@ export default function PreferencesPage() {
     setIsLoading(true);
 
     try {
-      // Simulate API call to save preferences
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Save preferences to backend
+      if (selectedPreferences.length > 0) {
+        await updatePreferences(selectedPreferences);
+      }
       router.push('/dashboard');
-    } catch (err) {
-      console.log(err);
-      console.error('Failed to save preferences');
+    } catch (err: unknown) {
+      console.error('Failed to save preferences:', err);
+      // You could show a toast/error message here
     } finally {
       setIsLoading(false);
     }

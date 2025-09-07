@@ -1,114 +1,100 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User, Recommendation } from '@/types';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { getCurrentProfile, signOut, getUserRecommendations } from '@/lib/auth';
+import Image from 'next/image';
 
-// Mock current user data
-const mockCurrentUser: User = {
-  id: 'current_user',
-  name: 'Alex Johnson',
-  username: 'alex_foodie',
-  phoneNumber: '+91 9876543210',
-  bio: 'Food explorer and photography enthusiast. Always searching for the perfect biryani and authentic street food experiences.',
-  preferences: ['indian', 'street_food', 'spicy'],
-  friendsCount: 127,
-  recommendationsCount: 23,
-  createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-15'),
-};
-
-// Mock user recommendations
-const mockRecommendations: Recommendation[] = [
-  {
-    id: 'rec1',
-    restaurantId: 'rest1',
-    restaurant: {
-      id: 'rest1',
-      name: 'Paradise Biryani',
-      address: 'Secunderabad, Hyderabad',
-      location: { latitude: 17.4399, longitude: 78.4983 },
-      cuisine: ['Indian', 'Biryani'],
-      rating: 4.6,
-    },
-    userId: 'current_user',
-    user: mockCurrentUser,
-    type: ['casual_dining'],
-    cuisine: ['Indian', 'Biryani'],
-    personalNote: 'Best mutton biryani in Hyderabad! The meat is perfectly cooked and the flavors are incredible. Must try their raita and shorba too.',
-    photos: [],
-    upvotes: 15,
-    hasUserUpvoted: false,
-    isApproved: true,
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-01-10'),
-  },
-  {
-    id: 'rec2',
-    restaurantId: 'rest2',
-    restaurant: {
-      id: 'rest2',
-      name: 'Ramesh Tiffin Center',
-      address: 'Koti, Hyderabad',
-      location: { latitude: 17.3616, longitude: 78.4747 },
-      cuisine: ['South Indian'],
-      rating: 4.2,
-    },
-    userId: 'current_user',
-    user: mockCurrentUser,
-    type: ['street_food'],
-    cuisine: ['South Indian'],
-    personalNote: 'Amazing dosas and filter coffee. This place has been serving authentic breakfast for 40+ years. Try their masala dosa!',
-    photos: [],
-    upvotes: 8,
-    hasUserUpvoted: false,
-    isApproved: true,
-    createdAt: new Date('2024-01-08'),
-    updatedAt: new Date('2024-01-08'),
-  },
-  {
-    id: 'rec3',
-    restaurantId: 'rest3',
-    restaurant: {
-      id: 'rest3',
-      name: 'Pista House',
-      address: 'Charminar, Hyderabad',
-      location: { latitude: 17.3616, longitude: 78.4747 },
-      cuisine: ['Indian', 'Haleem'],
-      rating: 4.4,
-    },
-    userId: 'current_user',
-    user: mockCurrentUser,
-    type: ['street_food'],
-    cuisine: ['Indian', 'Haleem'],
-    personalNote: 'Famous for their haleem during Ramadan, but their kebabs are amazing year-round. Historic place with incredible flavors.',
-    photos: [],
-    upvotes: 12,
-    hasUserUpvoted: false,
-    isApproved: true,
-    createdAt: new Date('2024-01-05'),
-    updatedAt: new Date('2024-01-05'),
-  },
-];
 
 type ViewMode = 'map' | 'list';
 
+type ProfileData = {
+  id: string;
+  email: string;
+  name: string;
+  username: string;
+  bio?: string;
+  profile_picture_url?: string;
+  preferences: string[];
+  friends_count: number;
+  recommendations_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
+type UserRecommendation = {
+  id: string;
+  restaurant_id: string;
+  user_id: string;
+  type: string[];
+  cuisine: string[];
+  personal_note: string;
+  photos: string[];
+  upvotes: number;
+  is_approved: boolean;
+  created_at: string;
+  updated_at: string;
+  restaurant: {
+    id: string;
+    name: string;
+    address: string;
+    cuisine: string[];
+    rating?: number;
+  };
+};
+
 export default function ProfilePage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const { user: authUser, profile, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const [userProfile, setUserProfile] = useState<ProfileData | null>(null);
+  const [recommendations, setRecommendations] = useState<UserRecommendation[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    loadProfile();
-  }, []);
+    if (!authLoading && !authUser) {
+      router.replace('/auth/login');
+      return;
+    }
+    
+    if (!authLoading && authUser && profile) {
+      loadProfile();
+    }
+  }, [authUser, profile, authLoading, router]);
 
   const loadProfile = async () => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setUser(mockCurrentUser);
-    setRecommendations(mockRecommendations);
-    setIsLoading(false);
+    setError('');
+    
+    try {
+      // Get fresh profile data
+      const profileData = await getCurrentProfile();
+      setUserProfile(profileData as ProfileData || null);
+      
+      // Load user's recommendations from database
+      const userRecommendations = await getUserRecommendations();
+      setRecommendations(userRecommendations as UserRecommendation[] || []);
+    } catch (err: unknown) {
+      console.error('Failed to load profile:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load profile');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditProfile = () => {
+    router.push('/auth/profile-setup');
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.replace('/auth/login');
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
   };
 
   const getInitials = (name: string) => {
@@ -129,7 +115,8 @@ export default function ProfilePage() {
     return `${days} days ago`;
   };
 
-  if (isLoading) {
+  // Show loading if auth is loading or profile is loading
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
@@ -160,13 +147,42 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user) {
+  // Show error state
+  if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">Failed to load profile</p>
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">{error}</p>
+          <button
+            onClick={loadProfile}
+            className="bg-orange-500 text-white px-4 py-2 rounded-xl hover:bg-orange-600 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
+
+  // Redirect if not authenticated (shouldn't happen due to useEffect, but safety check)
+  if (!authUser || !profile || !userProfile) {
+    return null;
+  }
+
+  // Create display user object from profile data
+  const displayUser = {
+    id: userProfile.id,
+    name: userProfile.name || 'User',
+    username: userProfile.username || 'user',
+    email: userProfile.email || authUser.email,
+    bio: userProfile.bio || '',
+    preferences: userProfile.preferences || [],
+    friendsCount: userProfile.friends_count || 0,
+    recommendationsCount: userProfile.recommendations_count || 0,
+    createdAt: new Date(userProfile.created_at || Date.now()),
+    updatedAt: new Date(userProfile.updated_at || Date.now()),
+    profilePicture: userProfile.profile_picture_url,
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -174,9 +190,13 @@ export default function ProfilePage() {
       <div className="bg-white shadow-sm border-b border-gray-200 safe-area-top">
         <div className="px-4 py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-900">Profile</h1>
-          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+          <button 
+            onClick={handleSignOut}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            title="Sign out"
+          >
             <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
           </button>
         </div>
@@ -187,25 +207,37 @@ export default function ProfilePage() {
         <div className="px-4 py-6">
           <div className="flex items-start space-x-4 mb-4">
             {/* Profile Picture */}
-            <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-2xl font-bold text-white">
-                {getInitials(user.name)}
-              </span>
+            <div className="w-20 h-20 rounded-full overflow-hidden shadow-lg">
+              {displayUser.profilePicture ? (
+                <Image
+                  src={displayUser.profilePicture}
+                  alt={`${displayUser.name}'s profile`}
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-white">
+                    {getInitials(displayUser.name)}
+                  </span>
+                </div>
+              )}
             </div>
             
             {/* User Info */}
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-gray-900 mb-1">{user.name}</h2>
-              <p className="text-gray-600 mb-2">@{user.username}</p>
+              <h2 className="text-xl font-bold text-gray-900 mb-1">{displayUser.name}</h2>
+              <p className="text-gray-600 mb-2">@{displayUser.username}</p>
               
               {/* Stats */}
               <div className="flex space-x-6">
                 <div className="text-center">
-                  <div className="font-bold text-lg text-gray-900">{user.recommendationsCount}</div>
+                  <div className="font-bold text-lg text-gray-900">{displayUser.recommendationsCount}</div>
                   <div className="text-xs text-gray-600">Recommendations</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-bold text-lg text-gray-900">{user.friendsCount}</div>
+                  <div className="font-bold text-lg text-gray-900">{displayUser.friendsCount}</div>
                   <div className="text-xs text-gray-600">Friends</div>
                 </div>
                 <div className="text-center">
@@ -219,17 +251,20 @@ export default function ProfilePage() {
           </div>
           
           {/* Bio */}
-          {user.bio && (
-            <p className="text-gray-700 mb-4 leading-relaxed">{user.bio}</p>
+          {displayUser.bio && (
+            <p className="text-gray-700 mb-4 leading-relaxed">{displayUser.bio}</p>
           )}
           
           {/* Join Date */}
           <p className="text-sm text-gray-500">
-            Member since {formatJoinDate(user.createdAt)}
+            Member since {formatJoinDate(displayUser.createdAt)}
           </p>
           
           {/* Edit Profile Button */}
-          <button className="w-full mt-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-xl transition-colors">
+          <button 
+            onClick={handleEditProfile}
+            className="w-full mt-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-xl transition-colors"
+          >
             Edit Profile
           </button>
         </div>
@@ -284,7 +319,7 @@ export default function ProfilePage() {
                       
                       {/* Cuisine Tags */}
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {recommendation.cuisine.map((cuisine) => (
+                        {recommendation.restaurant?.cuisine?.map((cuisine: string) => (
                           <span 
                             key={cuisine}
                             className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium"
@@ -302,14 +337,14 @@ export default function ProfilePage() {
                         </svg>
                         {recommendation.upvotes}
                       </div>
-                      <p className="text-xs text-gray-500">{formatTimeAgo(recommendation.createdAt)}</p>
+                      <p className="text-xs text-gray-500">{formatTimeAgo(new Date(recommendation.created_at))}</p>
                     </div>
                   </div>
                   
                   {/* Personal Note */}
                   <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-sm text-gray-700 leading-relaxed">
-                      {recommendation.personalNote}
+                      {recommendation.personal_note}
                     </p>
                   </div>
                 </div>
@@ -322,7 +357,10 @@ export default function ProfilePage() {
                 </svg>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No recommendations yet</h3>
                 <p className="text-gray-500 mb-4">Start sharing your favorite food spots</p>
-                <button className="bg-orange-500 text-white px-6 py-2 rounded-xl font-medium hover:bg-orange-600 transition-colors">
+                <button 
+                  onClick={() => router.push('/dashboard/add')}
+                  className="bg-orange-500 text-white px-6 py-2 rounded-xl font-medium hover:bg-orange-600 transition-colors"
+                >
                   Add Recommendation
                 </button>
               </div>

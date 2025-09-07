@@ -58,3 +58,18 @@ The app targets mobile users primarily (iOS/Android via React Native or PWA), so
 - Tailwind v4 with PostCSS for styling
 - TypeScript strict mode enabled
 - App Router structure for file-based routing
+
+## TODO: Security Review Needed
+
+### Profile Pictures Storage Bucket Configuration
+**Current**: Public bucket (`005_setup_profile_pictures_storage.sql`)
+- ✅ Profile pictures are publicly accessible via direct URLs
+- ✅ Better performance, simpler implementation
+- ❌ Less secure - images accessible if URL is known
+
+**Alternative**: Private bucket (`005b_private_profile_pictures_storage.sql`)  
+- ✅ More secure - requires signed URLs to access
+- ✅ Better privacy control
+- ❌ More complex implementation, worse performance
+
+**Decision needed**: Choose public vs private bucket based on security requirements vs UX trade-offs. For social apps, public is typically preferred, but review based on specific privacy requirements.

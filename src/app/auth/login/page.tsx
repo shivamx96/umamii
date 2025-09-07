@@ -2,24 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { signInWithEmailOtp, verifyEmailOtp, signInWithMagicLink } from '@/lib/auth';
+import {Label} from "@/components/ui/label";
+import {Input} from "@/components/ui/input";
 
-const countryCodes = [
-  { code: '+1', name: 'United States', flag: '🇺🇸' },
-  { code: '+91', name: 'India', flag: '🇮🇳' },
-  { code: '+44', name: 'United Kingdom', flag: '🇬🇧' },
-  { code: '+86', name: 'China', flag: '🇨🇳' },
-];
 
 export default function LoginPage() {
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [step, setStep] = useState<'email' | 'method' | 'otp'>('email');
+  const [email, setEmail] = useState('');
+  const [, setAuthMethod] = useState<'magic_link' | 'otp' | null>(null);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [selectedCountry, setSelectedCountry] = useState(countryCodes[1]); // Default to India
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
@@ -39,22 +31,31 @@ export default function LoginPage() {
     return () => clearInterval(interval);
   }, [resendTimer, step]);
 
-  const handlePhoneSubmit = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phoneNumber) return;
+    if (!email) return;
     
+    setStep('method');
+  };
+
+  const handleMethodSelect = async (method: 'magic_link' | 'otp') => {
     setIsLoading(true);
     setError('');
+    setAuthMethod(method);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setStep('otp');
-      setResendTimer(60);
-      setCanResend(false);
-    } catch (err) {
+      if (method === 'magic_link') {
+        await signInWithMagicLink(email);
+        setError('Check your email for the magic link to sign in!');
+      } else {
+        await signInWithEmailOtp(email);
+        setStep('otp');
+        setResendTimer(60);
+        setCanResend(false);
+      }
+    } catch (err: unknown) {
       console.log(err);
-      setError('Failed to send OTP. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to send authentication. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -83,12 +84,22 @@ export default function LoginPage() {
     setError('');
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      router.push('/auth/profile-setup');
-    } catch (err) {
+      const result = await verifyEmailOtp(email, otpString);
+      
+      if (result.user) {
+        // Check if user has completed profile setup
+        const { getCurrentProfile } = await import('@/lib/auth');
+        const profile = await getCurrentProfile();
+        
+        if (profile && profile.name && profile.username) {
+          router.push('/dashboard');
+        } else {
+          router.push('/auth/profile-setup');
+        }
+      }
+    } catch (err: unknown) {
       console.log(err);
-      setError('Invalid OTP. Please try again.');
+      setError(err instanceof Error ? err.message : 'Invalid OTP. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -99,14 +110,13 @@ export default function LoginPage() {
     setError('');
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await signInWithEmailOtp(email);
       setResendTimer(60);
       setCanResend(false);
       setOtp(['', '', '', '', '', '']);
-    } catch (err) {
+    } catch (err: unknown) {
       console.log(err);
-      setError('Failed to resend OTP. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to resend OTP. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -124,60 +134,32 @@ export default function LoginPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold mb-2 text-gray-900">
-              {step === 'phone' ? 'Enter your phone number' : 'Verify your phone'}
+              {step === 'email' ? 'Enter your email' : 
+               step === 'method' ? 'Choose sign-in method' : 'Verify your email'}
             </h1>
             <p className="text-gray-600">
-              {step === 'phone' 
-                ? 'We\'ll send you a verification code' 
-                : `We've sent a 6-digit code to ${selectedCountry.code} ${phoneNumber}`
+              {step === 'email' 
+                ? 'We\'ll send you a verification code or magic link' 
+                : step === 'method'
+                ? 'How would you like to sign in?'
+                : `We've sent a 6-digit code to ${email}`
               }
             </p>
           </div>
 
-          {/* Phone Number Form */}
-          {step === 'phone' && (
-            <form onSubmit={handlePhoneSubmit} className="space-y-6">
+          {/* Email Form */}
+          {step === 'email' && (
+            <form onSubmit={handleEmailSubmit} className="space-y-6">
               <div className="space-y-4">
-                {/* Country Code Selector */}
                 <div>
-                  <Label className="text-sm font-medium mb-2">Country</Label>
-                  <Select value={selectedCountry.code} onValueChange={(value) => {
-                    const country = countryCodes.find(c => c.code === value);
-                    if (country) setSelectedCountry(country);
-                  }}>
-                    <SelectTrigger>
-                      <SelectValue>
-                        {selectedCountry.flag} {selectedCountry.code} {selectedCountry.name}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {countryCodes.map((country) => (
-                        <SelectItem key={country.code} value={country.code}>
-                          {country.flag} {country.code} {country.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Phone Number Input */}
-                <div>
-                  <Label className="text-sm font-medium mb-2">Phone Number</Label>
-                  <div className="flex space-x-3">
-                    <div className="flex items-center px-4 py-3 bg-muted rounded-xl min-w-[80px]">
-                      <span className="font-medium">
-                        {selectedCountry.flag} {selectedCountry.code}
-                      </span>
-                    </div>
-                    <Input
-                      type="tel"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                      placeholder="1234567890"
-                      maxLength={15}
-                      className="flex-1"
-                    />
-                  </div>
+                  <Label className="text-sm font-medium mb-2">Email Address</Label>
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    className="w-full"
+                  />
                 </div>
               </div>
 
@@ -189,19 +171,69 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={isLoading || !phoneNumber}
+                disabled={isLoading || !email}
                 className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-xl transition-colors"
               >
-                {isLoading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Sending OTP...</span>
-                  </div>
-                ) : (
-                  'Send OTP'
-                )}
+                Continue
               </button>
             </form>
+          )}
+
+          {/* Method Selection */}
+          {step === 'method' && (
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <button
+                  onClick={() => handleMethodSelect('magic_link')}
+                  disabled={isLoading}
+                  className="w-full p-4 border-2 border-gray-200 hover:border-orange-500 rounded-xl text-left transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-medium">Magic Link</h3>
+                      <p className="text-sm text-gray-600">Sign in with one click from your email</p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleMethodSelect('otp')}
+                  disabled={isLoading}
+                  className="w-full p-4 border-2 border-gray-200 hover:border-orange-500 rounded-xl text-left transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-medium">Email OTP</h3>
+                      <p className="text-sm text-gray-600">Enter a 6-digit code sent to your email</p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              {error && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-xl">
+                  <p className="text-sm text-green-600">{error}</p>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setStep('email')}
+                className="w-full text-gray-600 hover:text-gray-800 font-medium py-3 transition-colors"
+              >
+                ← Change Email
+              </button>
+            </div>
           )}
 
           {/* OTP Verification Form */}
@@ -269,10 +301,10 @@ export default function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => setStep('phone')}
+                onClick={() => setStep('method')}
                 className="w-full text-gray-600 hover:text-gray-800 font-medium py-3 transition-colors"
               >
-                ← Change Phone Number
+                ← Change Method
               </button>
             </form>
           )}
