@@ -1,135 +1,76 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User, FriendRequest } from '@/types';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { 
+  searchUsers, 
+  getFriends, 
+  getPendingRequests,
+  getSentRequests,
+  getFriendSuggestions,
+  sendFriendRequest,
+  acceptFriendRequest,
+  declineFriendRequest,
+  removeFriend
+} from '@/lib/auth';
+import Image from 'next/image';
 
-// Mock data for friends and requests
-const mockFriends: User[] = [
-  {
-    id: 'user1',
-    name: 'Ravi Kumar',
-    username: 'ravi_k',
-    phoneNumber: '+91 9876543210',
-    bio: 'Food lover from Bangalore',
-    preferences: ['indian', 'spicy'],
-    friendsCount: 42,
-    recommendationsCount: 15,
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-01-10'),
-  },
-  {
-    id: 'user2',
-    name: 'Priya Shah',
-    username: 'priya_foodie',
-    phoneNumber: '+91 9876543211',
-    bio: 'Korean food enthusiast',
-    preferences: ['korean', 'spicy'],
-    friendsCount: 38,
-    recommendationsCount: 22,
-    createdAt: new Date('2024-01-08'),
-    updatedAt: new Date('2024-01-08'),
-  },
-  {
-    id: 'user3',
-    name: 'Arjun Patel',
-    username: 'arjun_eats',
-    phoneNumber: '+91 9876543212',
-    bio: 'Street food explorer',
-    preferences: ['street_food', 'spicy'],
-    friendsCount: 25,
-    recommendationsCount: 8,
-    createdAt: new Date('2024-01-05'),
-    updatedAt: new Date('2024-01-05'),
-  },
-];
-
-const mockRequests: FriendRequest[] = [
-  {
-    id: 'req1',
-    fromUserId: 'user4',
-    fromUser: {
-      id: 'user4',
-      name: 'Sneha Reddy',
-      username: 'sneha_tastes',
-      phoneNumber: '+91 9876543213',
-      bio: 'Dessert lover and baker',
-      preferences: ['sweet', 'dessert'],
-      friendsCount: 18,
-      recommendationsCount: 12,
-      createdAt: new Date('2024-01-12'),
-      updatedAt: new Date('2024-01-12'),
-    },
-    toUserId: 'current_user',
-    toUser: mockFriends[0], // Placeholder
-    status: 'pending',
-    createdAt: new Date('2024-01-14'),
-    updatedAt: new Date('2024-01-14'),
-  },
-  {
-    id: 'req2',
-    fromUserId: 'user5',
-    fromUser: {
-      id: 'user5',
-      name: 'Vikram Singh',
-      username: 'vikram_bites',
-      phoneNumber: '+91 9876543214',
-      bio: 'Pizza and pasta expert',
-      preferences: ['italian', 'casual_dining'],
-      friendsCount: 33,
-      recommendationsCount: 19,
-      createdAt: new Date('2024-01-11'),
-      updatedAt: new Date('2024-01-11'),
-    },
-    toUserId: 'current_user',
-    toUser: mockFriends[0], // Placeholder
-    status: 'pending',
-    createdAt: new Date('2024-01-13'),
-    updatedAt: new Date('2024-01-13'),
-  },
-];
-
-const mockSuggestions: User[] = [
-  {
-    id: 'user6',
-    name: 'Kavya Nair',
-    username: 'kavya_cravings',
-    phoneNumber: '+91 9876543215',
-    bio: 'South Indian cuisine specialist',
-    preferences: ['south_indian', 'vegetarian'],
-    friendsCount: 21,
-    recommendationsCount: 14,
-    createdAt: new Date('2024-01-09'),
-    updatedAt: new Date('2024-01-09'),
-  },
-  {
-    id: 'user7',
-    name: 'Rohit Sharma',
-    username: 'rohit_eats',
-    phoneNumber: '+91 9876543216',
-    bio: 'Biryani connoisseur',
-    preferences: ['indian', 'spicy'],
-    friendsCount: 45,
-    recommendationsCount: 28,
-    createdAt: new Date('2024-01-07'),
-    updatedAt: new Date('2024-01-07'),
-  },
-];
 
 type TabType = 'friends' | 'requests' | 'suggestions';
 
+type Friend = {
+  id: string;
+  name: string;
+  username: string;
+  bio: string | null;
+  profile_picture_url: string | null;
+  friends_count: number;
+  recommendations_count: number;
+  created_at: string;
+};
+
+type FriendshipData = {
+  id: string;
+  user_id: string;
+  friend_id: string;
+  status: string;
+  created_at: string;
+  friend: Friend;
+};
+
+type FriendRequest = {
+  id: string;
+  user_id: string;
+  friend_id: string;
+  status: string;
+  created_at: string;
+  requester: Friend;
+};
+
 export default function FriendsPage() {
+  const { user: authUser, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('friends');
-  const [friends, setFriends] = useState<User[]>([]);
+  const [friends, setFriends] = useState<FriendshipData[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
-  const [suggestions, setSuggestions] = useState<User[]>([]);
+  const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
+  const [suggestions, setSuggestions] = useState<Friend[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<User[]>([]);
+  const [searchResults, setSearchResults] = useState<Friend[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!authLoading && !authUser) {
+      router.replace('/auth/login');
+      return;
+    }
+    
+    if (!authLoading && authUser) {
+      loadData();
+    }
+  }, [authUser, authLoading, router]);
 
   useEffect(() => {
     if (searchQuery.trim().length > 2) {
@@ -141,47 +82,151 @@ export default function FriendsPage() {
 
   const loadData = async () => {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setFriends(mockFriends);
-    setRequests(mockRequests);
-    setSuggestions(mockSuggestions);
-    setIsLoading(false);
+    
+    try {
+      const [friendsData, requestsData, sentRequestsData, suggestionsData] = await Promise.all([
+        getFriends(),
+        getPendingRequests(),
+        getSentRequests(),
+        getFriendSuggestions()
+      ]);
+      
+      console.log('Loaded data:', {
+        friends: friendsData?.length || 0,
+        requests: requestsData?.length || 0, 
+        sentRequests: sentRequestsData?.length || 0,
+        suggestions: suggestionsData?.length || 0
+      });
+      
+      console.log('Sent requests data:', sentRequestsData);
+      
+      setFriends(friendsData as FriendshipData[] || []);
+      setRequests(requestsData as FriendRequest[] || []);
+      setSentRequests(sentRequestsData as unknown as FriendRequest[] || []);
+      setSuggestions(suggestionsData as Friend[] || []);
+    } catch (err: unknown) {
+      console.error('Failed to load friends data:', err);
+      // Error handling could be added here
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const performSearch = async (query: string) => {
     setIsSearching(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Search from suggestions and other users
-    const results = mockSuggestions.filter(user =>
-      user.name.toLowerCase().includes(query.toLowerCase()) ||
-      user.username.toLowerCase().includes(query.toLowerCase())
-    );
-    
-    setSearchResults(results);
-    setIsSearching(false);
+    try {
+      const results = await searchUsers(query);
+      setSearchResults(results as Friend[] || []);
+    } catch (err: unknown) {
+      console.error('Search error:', err);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleAcceptRequest = async (requestId: string) => {
-    const request = requests.find(r => r.id === requestId);
-    if (request) {
-      setFriends(prev => [...prev, request.fromUser]);
-      setRequests(prev => prev.filter(r => r.id !== requestId));
+    try {
+      await acceptFriendRequest(requestId);
+      // Reload data to reflect changes
+      await loadData();
+    } catch (err: unknown) {
+      console.error('Failed to accept friend request:', err);
     }
   };
 
   const handleDeclineRequest = async (requestId: string) => {
-    setRequests(prev => prev.filter(r => r.id !== requestId));
+    try {
+      await declineFriendRequest(requestId);
+      setRequests(prev => prev.filter(r => r.id !== requestId));
+    } catch (err: unknown) {
+      console.error('Failed to decline friend request:', err);
+    }
   };
 
   const handleSendFriendRequest = async (userId: string) => {
-    // Remove from suggestions and show as pending
-    setSuggestions(prev => prev.filter(u => u.id !== userId));
-    setSearchResults(prev => prev.filter(u => u.id !== userId));
+    try {
+      await sendFriendRequest(userId);
+      // Remove from suggestions and search results
+      setSuggestions(prev => prev.filter(u => u.id !== userId));
+      setSearchResults(prev => prev.filter(u => u.id !== userId));
+    } catch (err: unknown) {
+      console.error('Failed to send friend request:', err);
+    }
   };
 
-  const handleRemoveFriend = async (userId: string) => {
-    setFriends(prev => prev.filter(f => f.id !== userId));
+  // Helper function to get relationship status for a user
+  const getRelationshipStatus = (userId: string) => {
+    if (!authUser) return 'none';
+    
+    // Check if already friends
+    const isFriend = friends.some(friendship => {
+      return friendship.friend?.id === userId;
+    });
+    
+    if (isFriend) return 'friend';
+    
+    // Check for received requests
+    const hasReceivedRequest = requests.some(request => 
+      request.requester?.id === userId
+    );
+    
+    if (hasReceivedRequest) return 'pending_received';
+    
+    // Check for sent requests - need to check friend_id since that's the recipient
+    const hasSentRequest = sentRequests.some(request => 
+      request.friend_id === userId
+    );
+    
+    if (hasSentRequest) return 'pending_sent';
+    
+    return 'none';
+  };
+
+  // Render button based on relationship status
+  const renderRelationshipButton = (user: Friend) => {
+    const status = getRelationshipStatus(user.id);
+    
+    switch (status) {
+      case 'friend':
+        return (
+          <span className="px-4 py-2 bg-green-100 text-green-700 rounded-lg font-medium">
+            Friends
+          </span>
+        );
+      case 'pending_sent':
+        return (
+          <span className="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg font-medium">
+            Request Sent
+          </span>
+        );
+      case 'pending_received':
+        return (
+          <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium">
+            Request Received
+          </span>
+        );
+      default:
+        return (
+          <button
+            onClick={() => handleSendFriendRequest(user.id)}
+            className="px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
+          >
+            Add Friend
+          </button>
+        );
+    }
+  };
+
+  const handleRemoveFriend = async (friendshipId: string) => {
+    try {
+      await removeFriend(friendshipId);
+      // Reload data to reflect changes
+      await loadData();
+    } catch (err: unknown) {
+      console.error('Failed to remove friend:', err);
+    }
   };
 
   const getInitials = (name: string) => {
@@ -204,7 +249,8 @@ export default function FriendsPage() {
     { id: 'suggestions' as TabType, label: 'Suggestions', count: suggestions.length },
   ];
 
-  if (isLoading) {
+  // Show loading if auth or data is loading
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
@@ -230,6 +276,11 @@ export default function FriendsPage() {
         </div>
       </div>
     );
+  }
+  
+  // Redirect if not authenticated
+  if (!authUser) {
+    return null;
   }
 
   return (
@@ -276,22 +327,27 @@ export default function FriendsPage() {
                 {searchResults.map((user) => (
                   <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-orange-700">
-                          {getInitials(user.name)}
-                        </span>
+                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {user.profile_picture_url ? (
+                          <Image
+                            src={user.profile_picture_url}
+                            alt={user.name}
+                            width={40}
+                            height={40}
+                            className="w-10 h-10 object-cover rounded-full"
+                          />
+                        ) : (
+                          <span className="text-sm font-medium text-orange-700">
+                            {getInitials(user.name)}
+                          </span>
+                        )}
                       </div>
-                      <div>
-                        <h3 className="font-medium text-gray-900">{user.name}</h3>
-                        <p className="text-sm text-gray-600">@{user.username}</p>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-gray-900 truncate">{user.name}</h3>
+                        <p className="text-sm text-gray-600 truncate">@{user.username}</p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleSendFriendRequest(user.id)}
-                      className="px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
-                    >
-                      Add Friend
-                    </button>
+                    {renderRelationshipButton(user)}
                   </div>
                 ))}
               </div>
@@ -337,30 +393,40 @@ export default function FriendsPage() {
         {activeTab === 'friends' && (
           <div className="space-y-3">
             {friends.length > 0 ? (
-              friends.map((friend) => (
-                <div key={friend.id} className="bg-white rounded-xl p-4 shadow-sm">
+              friends.map((friendship) => (
+                <div key={friendship.id} className="bg-white rounded-xl p-4 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-orange-700">
-                          {getInitials(friend.name)}
-                        </span>
+                      <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {friendship.friend?.profile_picture_url ? (
+                          <Image
+                            src={friendship.friend.profile_picture_url}
+                            alt={friendship.friend.name}
+                            width={48}
+                            height={48}
+                            className="w-12 h-12 object-cover rounded-full"
+                          />
+                        ) : (
+                          <span className="text-sm font-medium text-orange-700">
+                            {getInitials(friendship.friend?.name || 'User')}
+                          </span>
+                        )}
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">{friend.name}</h3>
-                        <p className="text-sm text-gray-600">@{friend.username}</p>
+                        <h3 className="font-semibold text-gray-900">{friendship.friend?.name || 'User'}</h3>
+                        <p className="text-sm text-gray-600">@{friendship.friend?.username || 'username'}</p>
                         <div className="flex items-center space-x-4 mt-1">
                           <span className="text-xs text-gray-500">
-                            {friend.recommendationsCount} recommendations
+                            {friendship.friend?.recommendations_count || 0} recommendations
                           </span>
                           <span className="text-xs text-gray-500">
-                            {friend.friendsCount} friends
+                            {friendship.friend?.friends_count || 0} friends
                           </span>
                         </div>
                       </div>
                     </div>
                     <button
-                      onClick={() => handleRemoveFriend(friend.id)}
+                      onClick={() => handleRemoveFriend(friendship.id)}
                       className="text-gray-400 hover:text-red-500 transition-colors"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -389,16 +455,26 @@ export default function FriendsPage() {
                 <div key={request.id} className="bg-white rounded-xl p-4 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-green-700">
-                          {getInitials(request.fromUser.name)}
-                        </span>
+                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {request.requester?.profile_picture_url ? (
+                          <Image
+                            src={request.requester.profile_picture_url}
+                            alt={request.requester.name}
+                            width={48}
+                            height={48}
+                            className="w-12 h-12 object-cover rounded-full"
+                          />
+                        ) : (
+                          <span className="text-sm font-medium text-green-700">
+                            {getInitials(request.requester?.name || 'User')}
+                          </span>
+                        )}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">{request.fromUser.name}</h3>
-                        <p className="text-sm text-gray-600">@{request.fromUser.username}</p>
+                        <h3 className="font-semibold text-gray-900">{request.requester?.name || 'User'}</h3>
+                        <p className="text-sm text-gray-600">@{request.requester?.username || 'username'}</p>
                         <p className="text-xs text-gray-500 mt-1">
-                          Requested {formatTimeAgo(request.createdAt)}
+                          Requested {formatTimeAgo(new Date(request.created_at))}
                         </p>
                       </div>
                     </div>
@@ -439,23 +515,36 @@ export default function FriendsPage() {
                 <div key={user.id} className="bg-white rounded-xl p-4 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-blue-700">
-                          {getInitials(user.name)}
-                        </span>
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {user.profile_picture_url ? (
+                          <Image
+                            src={user.profile_picture_url}
+                            alt={user.name}
+                            width={48}
+                            height={48}
+                            className="w-12 h-12 object-cover rounded-full"
+                          />
+                        ) : (
+                          <span className="text-sm font-medium text-blue-700">
+                            {getInitials(user.name)}
+                          </span>
+                        )}
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">{user.name}</h3>
                         <p className="text-sm text-gray-600">@{user.username}</p>
-                        <p className="text-xs text-gray-500 mt-1">{user.bio}</p>
+                        {user.bio && <p className="text-xs text-gray-500 mt-1">{user.bio}</p>}
+                        <div className="flex items-center space-x-4 mt-1">
+                          <span className="text-xs text-gray-500">
+                            {user.recommendations_count || 0} recommendations
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {user.friends_count || 0} friends
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleSendFriendRequest(user.id)}
-                      className="px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
-                    >
-                      Add Friend
-                    </button>
+                    {renderRelationshipButton(user)}
                   </div>
                 </div>
               ))
