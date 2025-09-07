@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailOtp, verifyEmailOtp, signInWithMagicLink } from '@/lib/auth';
+import { signInWithEmailOtp, verifyEmailOtp, signInWithMagicLink } from '@/lib/backend';
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 
@@ -88,7 +88,7 @@ export default function LoginPage() {
       
       if (result.user) {
         // Check if user has completed profile setup
-        const { getCurrentProfile } = await import('@/lib/auth');
+        const { getCurrentProfile } = await import('@/lib/supabase');
         const profile = await getCurrentProfile();
         
         if (profile && profile.name && profile.username) {

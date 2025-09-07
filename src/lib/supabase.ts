@@ -6,14 +6,14 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
 
-// Auth helpers
-export const auth = supabase.auth
-
-// Database helpers for common operations
-export const db = supabase.from
-
-// Storage helpers
-export const storage = supabase.storage
-
-// Real-time helpers
-export const channel = supabase.channel
+// // Auth helpers
+// export const auth = supabase.auth
+//
+// // Database helpers for common operations
+// export const db = supabase.from
+//
+// // Storage helpers
+// export const storage = supabase.storage
+//
+// // Real-time helpers
+// export const channel = supabase.channel

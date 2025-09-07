@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { updatePreferences } from '@/lib/auth';
+import { updatePreferences } from '@/lib/backend';
 import { FoodPreference } from '@/types';
 
 const foodPreferences: { value: FoodPreference; label: string; icon: string }[] = [

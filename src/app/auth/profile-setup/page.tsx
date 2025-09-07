@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { createProfile, checkUsernameAvailability, uploadProfilePicture, updateProfilePicture, getCurrentProfile } from '@/lib/auth';
+import { createProfile, checkUsernameAvailability, uploadProfilePicture, updateProfilePicture, getCurrentProfile } from '@/lib/backend';
 import Image from 'next/image';
 
 export default function ProfileSetupPage() {

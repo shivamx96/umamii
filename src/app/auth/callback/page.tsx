@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { getCurrentProfile } from '@/lib/auth';
+import { getCurrentProfile } from '@/lib/backend';
 
 export default function AuthCallback() {
   const router = useRouter();

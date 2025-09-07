@@ -13,7 +13,7 @@ import {
   acceptFriendRequest,
   declineFriendRequest,
   removeFriend
-} from '@/lib/auth';
+} from '@/lib/backend';
 import Image from 'next/image';
 
 

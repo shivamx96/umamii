@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
-import { onAuthStateChange, getCurrentProfile } from '@/lib/auth'
+import { onAuthStateChange, getCurrentProfile } from '@/lib/backend'
 import type { Database } from '@/types/supabase'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const handleSignOut = async () => {
-    const { signOut } = await import('@/lib/auth')
+    const { signOut } = await import('@/lib/backend')
     await signOut()
     setUser(null)
     setProfile(null)
